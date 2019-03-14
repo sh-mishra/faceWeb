@@ -84,7 +84,220 @@
     function openCVFileLoadSuccess() {
         $('#startCamera').prop('disabled', false);
     }
+    $(document).ready(function () {
+        var count = 0;
+        // variable to track the total umber of umages to be captured
+        var captureCount = 1;
+        // variable to track the face side
+        var faceSideCounter = 0;
+        // if change the sequence, then make sure tp change in both below array
+        // order of the both the array should remain same
+        var faceSide = ['front', 'left', 'right', 'top', 'down'];
+        // instruction array to shown
+        var instructionArr = ['Look Straight', 'Look slight Left', 'Look slight right', 'Look slight Down', 'Look slight Up'];
+        var isCamerOn = false;
+        var resetMode = false;
+        // initial instruction text, before the process has started or when the page is loaded successfully
+        var initialInstructionBoxText = "Follow the Instructions that appear here in the Box!";
+        var instructionBox = $('#instructionBoxText');
+        // func to reset the whole process
+        function reset() {
+            count = 0;
+            captureCount = 1;
+            faceSideCounter = 0;
+            resetMode = false;
+            $('.capturedImg').each(function () {
+                $(this).attr('src', 'assets/images/camera_icon.png');
+            });
+            $('#finalSubmit').prop('disabled', true).html('<i class="fa fa-paper-plane"></i> Submit');
+            tmpCanvasOutput.getContext('2d').clearRect(0, 0, tmpCanvasOutput.width, tmpCanvasOutput.height);
+            instructionBox.text(initialInstructionBoxText);
+            $('#capture').prop('disabled', true).removeClass('captureOn');
+        }
+        $('#startCamera').click(function () {
+            if(isCamerOn || resetMode){
+                stopCamera();
+                isCamerOn = false;
+                reset();
+                $(this).html('<i class="fa fa-camera-retro"></i>&nbsp;Start Process');
+            } else {
+                isCamerOn = true;
+                resetMode = true;
+                instructionBox.text(instructionArr[faceSideCounter]);
+                opencvIsReady();
+                $(this).html('<i class="fa fa-paper-plane"></i>&nbsp;Reset/Stop').prop('disabled', true);
+            }
+        });
+        $('#capture').click(function () {
+            if(!isCamerOn) {
+                alert('Camera is not on');
+                return;
+            }
+            if(captureCount > 15) {
+                alert("Can't Capture more Images;");
+                stopCamera();
+                return;
+            }
+            $(this).prop('disabled', true).addClass('captureOn');
+            $('#startCamera').prop('disabled', true);
+            // change the below second parameter to change to timeinterval of the catpure 
+            // time is in miliseconds, eg below in  every 400ms the image will be captured
+            var id = setInterval(capture, 400);
+            // below variable tracks the set of images captured in 3, for every side of face 3 images will be captured
+            var imgCaptured = 1;
+            function capture() {
+                console.log("imgCaptured: "+imgCaptured+"; captureCount: "+captureCount+"; faceSideCounter: "+faceSideCounter);
+                // edit the second parameter for the quality of the image
+                // range between 0 to 1, 1 being the highest quality
+                var capturedImg = tmpCanvasOutput.toDataURL('image/jpeg', 0.8);
+                $('#img'+ (captureCount-1).toString()).attr('src', capturedImg);
+                if(imgCaptured>=3){
+                    console.log("Finished");
+                    if(captureCount>=15){
+                        console.log("Total image captured before stop: "+ captureCount);
+                        clearInterval(id);
+                        stopCamera();
+                        isCamerOn = false;
+                        $('#capture').prop('disabled', true);
+                        $('#finalSubmit').prop('disabled', false);
+                        $('#startCamera').prop('disabled', false);
+                        // final instruction to be displayed when all 15 images are clicked
+                        instructionBox.text("Verify All the Images and Then press the Submit Button");
+                        return;
+                    }
+                    clearInterval(id);
+                    faceSideCounter++;
+                    if(instructionBox.hasClass('alert-danger')){
+                        instructionBox.removeClass('alert-danger').addClass('alert-info');
+                    }
+                    instructionBox.text(instructionArr[faceSideCounter]);
+                    $('#capture').prop('disabled', false).removeClass('captureOn');
+                    $('#startCamera').prop('disabled', false);
+                }
+                captureCount++;
+                imgCaptured++;
+            }
+        });
 
+        // finalSubmit button when all the 15 images are clicked
+        $('#finalSubmit').click(function () {
+            $(this).html('Uploading...');
+            $(this).prop('disabled', true);
+            var form = new FormData();
+            var studentName = $('#displayStudentName').text();
+            var studentId = $('#displayStudentId').text();
+            // check whether the student details has been entered or not
+            if(studentId===''){
+                studentId = prompt("Enter Student Id.");
+                if(studentId===''){
+                    alert("Error");
+                    location.reload();
+                }
+            }
+            if(studentName===''){
+                studentName = prompt("Enter Student Name.");
+                if(studentName===''){
+                    alert("Error");
+                    location.reload();
+                }
+            }
+            form.append('studentId', studentId.replace(/\s/g,''));
+            form.append('studentName', studentName);
+            for(var i=0; i<15; i++){
+                // convert image URI to blob for uploading
+                // Image URI cannot be uploaded as its is a text 
+                var imgBlob = dataURItoBlob($('#img'+i.toString()).attr('src'));
+                var imgName = studentId.replace(/\s/g,'') + '-' + studentName.replaceAll(' ', '-') + '-' + i.toString() + '.jpeg';
+                form.append('images', imgBlob, imgName);
+            }
+            var thisBtn = $(this);
+            $.ajax({
+                url: 'api/upload',
+                type: 'POST',
+                data: form,
+                contentType: false,
+                processData: false,
+                enctype: 'multipart/form-data',
+                cache: false,
+                success: function (res) {
+                    console.log(res);
+                    thisBtn.html('Files Uploaded Successfully!');
+                    alert('Files Uploaded Successfully!');
+                    location.reload();
+                },
+                error: function(err){
+                    console.log(err);
+                    thisBtn.prop('disabled', false);
+                    thisBtn.html('<i class="fa fa-paper-plane"></i> Try Again');
+                }
+            });
+        });
+
+        $('#studentId, #studentName, #studentEmail').keyup(function() {
+            var empty = false;
+            var validateNameRegex = /^[a-zA-Z ]{2,64}$/;
+            $('#studentId, #studentName, #studentEmail').each(function() {
+                if ($(this).val() === '') {
+                    empty = true;
+                } else {
+                    // console.log($(this).attr('id'));
+                    if($(this).attr('id') === 'studentName'){
+                        // console.log('studentName');
+                        if(validateNameRegex.test($(this).val())){
+                            if($(this).hasClass('border-danger')){
+                                $(this).removeClass('border-danger');
+                            }
+                        } else {
+                            if(!$(this).hasClass('border-danger')){
+                                $(this).addClass('border-danger');
+                            }
+                            empty=true;
+                        }
+                    }
+                    if($(this).attr('id') === 'studentEmail'){
+                        // console.log('studentEmail');
+                        if(validateEmail($(this).val())){
+                            if($(this).hasClass('border-danger')){
+                                $(this).removeClass('border-danger');
+                            }
+                        } else {
+                            if(!$(this).hasClass('border-danger')){
+                                $(this).addClass('border-danger');
+                            }
+                            empty=true;
+                        }
+                    }
+                }
+            });
+            if(empty){
+                $('#modalFormSubmitBtn').prop('disabled', true);
+            } else {
+                $('#modalFormSubmitBtn').prop('disabled', false);
+            }
+        });
+        $('#modalFormSubmitBtn').click(function () {
+            $('#studentDetailFormModal').modal('toggle');
+            $('#displayStudentId').text($('#studentId').val());
+            $('#displayStudentName').text($('#studentName').val());
+            $('#displayStudentEmail').text($('#studentEmail').val());
+            if(getCookie("instructionBoxRememberMe")===""){
+                $('#instructionModal').modal('toggle');
+            }
+        });
+
+        $('#instructionRememberMeCheck').change(function () {
+            if($(this).is(':checked')){
+                setCookie("instructionBoxRememberMe", "checked", 300);
+            }
+            console.log(getCookie("instructionBoxRememberMe"));
+        });
+
+        $('#studentDetailFormModal').modal({
+            show: true,
+            keyboard: false,
+            backdrop: "static"
+        });
+    });
 </script>
 </body>
 </html>
