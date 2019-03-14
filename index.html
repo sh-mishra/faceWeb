@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Face Tracking</title>
+    <link rel="stylesheet" href="assets/libs/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/css/colors/default.css" id="color-scheme">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+    <style>
+    /*canvas shadow*/
+        #canvasOutput {
+            box-shadow: -1px 11px 24px 4px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+<div class="main blue-gradient">
+    <section class="module mb-0 mt-0 pt-0 pb-20">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-9 col-md-9 col-lg-9 col-xl-8">
+                    <div class="container">
+                        <div class="row mt-30 mb-30">
+                            <div id="container">
+                            </div>
+                            <div class="d-none alert alert-danger alert-dismissible font-alt" id="multipleFaceDetectedError" >
+                                <button type="button" class="close" data-dismiss="alert">×</button>
+                                <p class="text-lg-left text-danger">Multiple Faces Detected!</p>
+                            </div>
+                            <div class="container">
+                                <div class="row mb-0 align-center">
+                                    <div class="alert alert-info border-dark transbox mx-auto mb-20" id="instructionBox">
+                                        <p class="text-center m-0" id="instructionBoxText">Follow the Instructions that apper here!</p>
+                                    </div>
+                                </div>
+                                <div class="row mt-0">
+                                    <canvas class="center-block bg-light" id="canvasOutput" style="border-radius: 4%"></canvas>
+                                </div>
+                            </div>
+                            <div class="d-none"><video id="video" class="hidden">Your browser does not support the video tag.</video></div>
+                            <div class="d-none"><canvas id="tmpCanvas"></canvas></div>
+                        </div>
+                        <div class="row" style="margin: 0 auto;">
+                            <div class="center-block">
+                                <button class="btn btn-danger" id="startCamera"><i class="fa fa-camera-retro"></i>&nbsp;Start Process</button>
+                            </div>
+                            <br>
+                            <!--<div class="text-center">
+                                <a href="" class="btn btn-default btn-rounded" data-toggle="modal" data-target="#studentDetailFormModal" data-backdrop="true">Launch Modal Form</a>
+                            </div>-->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="assets/js/adapter-latest.js"></script>
+<script src="assets/js/stats.min.js"></script>
+<script src="assets/js/dat.gui.min.js"></script>
+<script>
+    var Module = {
+        wasmBinaryFile: 'assets/build/wasm/opencv_js.wasm',
+        preRun: [function() {
+            Module.FS_createPreloadedFile('/', 'haarcascade_profileface.xml', 'assets/build/haarcascade/haarcascade_profileface.xml', true, false);
+            Module.FS_createPreloadedFile('/', 'haarcascade_frontalface_default.xml', 'assets/build/haarcascade/haarcascade_frontalface_default.xml', true, false);
+        }]
+        /*main: function() {opencvIsReady();}*/
+    };
+</script>
+<script async src="assets/js/opencv.js" onload="openCVFileLoadSuccess();"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="assets/libs/bootstrap/js/bootstrap.min.js"></script>
+<script src="assets/js/index.js"></script>
+<script>
+    var tmpCanvasOutput = document.getElementById('tmpCanvas');
+    var canvasOutput = document.getElementById('canvasOutput');
+    function openCVFileLoadSuccess() {
+        $('#startCamera').prop('disabled', false);
+    }
+    $(document).ready(function () {
+        var count = 0;
+        // variable to track the total umber of umages to be captured
+        var captureCount = 1;
+        // variable to track the face side
+        var faceSideCounter = 0;
+        // if change the sequence, then make sure tp change in both below array
+        // order of the both the array should remain same
+        var faceSide = ['front', 'left', 'right', 'top', 'down'];
+        // instruction array to shown
+        var instructionArr = ['Look Straight', 'Look slight Left', 'Look slight right', 'Look slight Down', 'Look slight Up'];
+        var isCamerOn = false;
+        var resetMode = false;
+        // initial instruction text, before the process has started or when the page is loaded successfully
+        var initialInstructionBoxText = "Follow the Instructions that appear here in the Box!";
+        var instructionBox = $('#instructionBoxText');
+        // func to reset the whole process
+        function reset() {
+            count = 0;
+            captureCount = 1;
+            faceSideCounter = 0;
+            resetMode = false;
+            $('.capturedImg').each(function () {
+                $(this).attr('src', 'assets/images/camera_icon.png');
+            });
+            $('#finalSubmit').prop('disabled', true).html('<i class="fa fa-paper-plane"></i> Submit');
+            tmpCanvasOutput.getContext('2d').clearRect(0, 0, tmpCanvasOutput.width, tmpCanvasOutput.height);
+            instructionBox.text(initialInstructionBoxText);
+            $('#capture').prop('disabled', true).removeClass('captureOn');
+        }
+        $('#startCamera').click(function () {
+            if(isCamerOn || resetMode){
+                stopCamera();
+                isCamerOn = false;
+                reset();
+                $(this).html('<i class="fa fa-camera-retro"></i>&nbsp;Start Process');
+            } else {
+                isCamerOn = true;
+                resetMode = true;
+                instructionBox.text(instructionArr[faceSideCounter]);
+                opencvIsReady();
+                $(this).html('<i class="fa fa-paper-plane"></i>&nbsp;Reset/Stop').prop('disabled', true);
+            }
+        });
+        $('#capture').click(function () {
+            if(!isCamerOn) {
+                alert('Camera is not on');
+                return;
+            }
+            if(captureCount > 15) {
+                alert("Can't Capture more Images;");
+                stopCamera();
+                return;
+            }
+            $(this).prop('disabled', true).addClass('captureOn');
+            $('#startCamera').prop('disabled', true);
+            // change the below second parameter to change to timeinterval of the catpure 
+            // time is in miliseconds, eg below in  every 400ms the image will be captured
+            var id = setInterval(capture, 400);
+            // below variable tracks the set of images captured in 3, for every side of face 3 images will be captured
+            var imgCaptured = 1;
+            function capture() {
+                console.log("imgCaptured: "+imgCaptured+"; captureCount: "+captureCount+"; faceSideCounter: "+faceSideCounter);
+                // edit the second parameter for the quality of the image
+                // range between 0 to 1, 1 being the highest quality
+                var capturedImg = tmpCanvasOutput.toDataURL('image/jpeg', 0.8);
+                $('#img'+ (captureCount-1).toString()).attr('src', capturedImg);
+                if(imgCaptured>=3){
+                    console.log("Finished");
+                    if(captureCount>=15){
+                        console.log("Total image captured before stop: "+ captureCount);
+                        clearInterval(id);
+                        stopCamera();
+                        isCamerOn = false;
+                        $('#capture').prop('disabled', true);
+                        $('#finalSubmit').prop('disabled', false);
+                        $('#startCamera').prop('disabled', false);
+                        // final instruction to be displayed when all 15 images are clicked
+                        instructionBox.text("Verify All the Images and Then press the Submit Button");
+                        return;
+                    }
+                    clearInterval(id);
+                    faceSideCounter++;
+                    if(instructionBox.hasClass('alert-danger')){
+                        instructionBox.removeClass('alert-danger').addClass('alert-info');
+                    }
+                    instructionBox.text(instructionArr[faceSideCounter]);
+                    $('#capture').prop('disabled', false).removeClass('captureOn');
+                    $('#startCamera').prop('disabled', false);
+                }
+                captureCount++;
+                imgCaptured++;
+            }
+        });
+
+        // finalSubmit button when all the 15 images are clicked
+        $('#finalSubmit').click(function () {
+            $(this).html('Uploading...');
+            $(this).prop('disabled', true);
+            var form = new FormData();
+            var studentName = $('#displayStudentName').text();
+            var studentId = $('#displayStudentId').text();
+            // check whether the student details has been entered or not
+            if(studentId===''){
+                studentId = prompt("Enter Student Id.");
+                if(studentId===''){
+                    alert("Error");
+                    location.reload();
+                }
+            }
+            if(studentName===''){
+                studentName = prompt("Enter Student Name.");
+                if(studentName===''){
+                    alert("Error");
+                    location.reload();
+                }
+            }
+            form.append('studentId', studentId.replace(/\s/g,''));
+            form.append('studentName', studentName);
+            for(var i=0; i<15; i++){
+                // convert image URI to blob for uploading
+                // Image URI cannot be uploaded as its is a text 
+                var imgBlob = dataURItoBlob($('#img'+i.toString()).attr('src'));
+                var imgName = studentId.replace(/\s/g,'') + '-' + studentName.replaceAll(' ', '-') + '-' + i.toString() + '.jpeg';
+                form.append('images', imgBlob, imgName);
+            }
+            var thisBtn = $(this);
+            $.ajax({
+                url: 'api/upload',
+                type: 'POST',
+                data: form,
+                contentType: false,
+                processData: false,
+                enctype: 'multipart/form-data',
+                cache: false,
+                success: function (res) {
+                    console.log(res);
+                    thisBtn.html('Files Uploaded Successfully!');
+                    alert('Files Uploaded Successfully!');
+                    location.reload();
+                },
+                error: function(err){
+                    console.log(err);
+                    thisBtn.prop('disabled', false);
+                    thisBtn.html('<i class="fa fa-paper-plane"></i> Try Again');
+                }
+            });
+        });
+
+        $('#studentId, #studentName, #studentEmail').keyup(function() {
+            var empty = false;
+            var validateNameRegex = /^[a-zA-Z ]{2,64}$/;
+            $('#studentId, #studentName, #studentEmail').each(function() {
+                if ($(this).val() === '') {
+                    empty = true;
+                } else {
+                    // console.log($(this).attr('id'));
+                    if($(this).attr('id') === 'studentName'){
+                        // console.log('studentName');
+                        if(validateNameRegex.test($(this).val())){
+                            if($(this).hasClass('border-danger')){
+                                $(this).removeClass('border-danger');
+                            }
+                        } else {
+                            if(!$(this).hasClass('border-danger')){
+                                $(this).addClass('border-danger');
+                            }
+                            empty=true;
+                        }
+                    }
+                    if($(this).attr('id') === 'studentEmail'){
+                        // console.log('studentEmail');
+                        if(validateEmail($(this).val())){
+                            if($(this).hasClass('border-danger')){
+                                $(this).removeClass('border-danger');
+                            }
+                        } else {
+                            if(!$(this).hasClass('border-danger')){
+                                $(this).addClass('border-danger');
+                            }
+                            empty=true;
+                        }
+                    }
+                }
+            });
+            if(empty){
+                $('#modalFormSubmitBtn').prop('disabled', true);
+            } else {
+                $('#modalFormSubmitBtn').prop('disabled', false);
+            }
+        });
+        $('#modalFormSubmitBtn').click(function () {
+            $('#studentDetailFormModal').modal('toggle');
+            $('#displayStudentId').text($('#studentId').val());
+            $('#displayStudentName').text($('#studentName').val());
+            $('#displayStudentEmail').text($('#studentEmail').val());
+            if(getCookie("instructionBoxRememberMe")===""){
+                $('#instructionModal').modal('toggle');
+            }
+        });
+
+        $('#instructionRememberMeCheck').change(function () {
+            if($(this).is(':checked')){
+                setCookie("instructionBoxRememberMe", "checked", 300);
+            }
+            console.log(getCookie("instructionBoxRememberMe"));
+        });
+
+        $('#studentDetailFormModal').modal({
+            show: true,
+            keyboard: false,
+            backdrop: "static"
+        });
+    });
+</script>
+</body>
+</html>

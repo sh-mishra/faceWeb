@@ -1,0 +1,283 @@
+@import url(https://fonts.googleapis.com/css?family=Arvo:700);
+@import url(https://fonts.googleapis.com/css?family=Seaweed+Script);
+
+canvas {
+    border: 1px solid black;
+}
+
+.center-block {
+    display: block;
+    margin: auto;
+}
+
+.zoom {
+    padding: 50px;
+    transition: transform .2s; /* Animation */
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+}
+
+.navbar {
+    min-height: 90px;
+}
+
+.zoom:hover {
+    transform: scale(1.25); /* (150% zoom - Note: if the zoom is too large, it will go outside of the viewport) */
+}
+
+.navbar-toggle {
+    background-color: transparent;
+}
+.navbar-toggle .icon-bar {
+    background: red;
+}
+.clip {
+    width: 250px;
+    height: 250px;
+}
+
+.text-bold {
+    font-weight: bold;
+    font-size: 18px;
+    transform: scale(1, 1);
+    text-shadow:
+            -1px -1px 2px rgba(0, 0, 0, 0.55),
+            1px -1px 2px rgba(0, 0, 0, 0.55),
+            -1px 1px 2px rgba(0, 0, 0, 0.55),
+            1px 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.text-bold-1 {
+    font-weight: bolder;
+    font-size: x-large;
+    text-shadow:
+            -1px -1px 5px rgba(0, 0, 0, 0.55),
+            1px -1px 5px rgba(0, 0, 0, 0.55),
+            -1px 1px 5px rgba(0, 0, 0, 0.55),
+            1px 1px 5px rgba(0, 0, 0, 0.55);
+}
+
+.text-bold-2 {
+    font-weight: bolder;
+    font-size: xx-large;
+    text-shadow:
+            -1px -1px 5px rgba(0, 0, 0, 0.55),
+            1px -1px 5px rgba(0, 0, 0, 0.55),
+            -1px 1px 5px rgba(0, 0, 0, 0.55),
+            1px 1px 5px rgba(0, 0, 0, 0.55);
+}
+
+.plate {
+/*    width: 410px;*/
+    margin: 10% auto;
+}
+.shadow {
+    color: #fff;
+    font-family: Arvo;
+    font-weight: bold;
+    text-shadow:
+            -3px -3px 0 #222,
+            3px -3px 0 #222,
+            -3px 3px 0 #222,
+            3px 3px 0 #222,
+            4px 4px 0 #fff,
+            5px 5px 0 #fff,
+            6px 6px 0 #fff,
+            7px 7px 0 #fff;
+    line-height: 0.8em;
+    letter-spacing: 0.1em;
+    transform: scaleY(0.7);
+    -webkit-transform: scaleY(0.7);
+    -moz-transform: scaleY(0.7);
+    margin:0;
+    text-align: center;
+}
+.script {
+    font-family: "Seaweed Script";
+    color: #fff;
+    text-align: center;
+    font-size: 3.5em;
+    position: relative;
+    margin:0;
+}
+.script span {
+    background-color: #222;
+    padding: 0 0.3em;
+}
+.script:before {
+    content:"";
+    display: block;
+    position: absolute;
+    z-index:-1;
+    top: 50%;
+    width: 100%;
+    border-bottom: 3px solid #fff;
+}
+.text1 {
+    font-size: 30px;
+}
+.text2 {
+    font-size: 75px;
+}
+.text3 {
+    font-size: 50px;
+}
+
+.zoomInOutEffect-1 {
+    -webkit-animation-name: zoomInOut-1;
+    -webkit-animation-duration: 1s;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-delay: 0.2s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-direction: alternate;
+    /* Standard syntax */
+    animation-name: zoomInOut-1;
+    animation-duration: 1s;
+    animation-timing-function: linear;
+    animation-delay: 0.2s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+/* Safari 4.0 - 8.0 */
+@-webkit-keyframes zoomInOut-1 {
+    0%   {transform: scale(1);}
+    50%  {transform: scale(1.2);}
+    100% {transform: scale(1.4);}
+}
+
+/* Standard syntax */
+@keyframes zoomInOut-1 {
+    0%   {transform: scale(1);}
+    50%  {transform: scale(1.1);}
+    100% {transform: scale(1.2);}
+}
+
+.zoomInOutEffect-2 {
+    -webkit-animation-name: zoomInOut-2;
+    -webkit-animation-duration: 1s;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-delay: 0.2s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-direction: alternate;
+    /* Standard syntax */
+    animation-name: zoomInOut-2;
+    animation-duration: 1s;
+    animation-timing-function: linear;
+    animation-delay: 0.2s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+/* Safari 4.0 - 8.0 */
+@-webkit-keyframes zoomInOut-2 {
+    0%   {transform: scale(1);}
+    50%  {transform: scale(1.05);}
+    100% {transform: scale(1.1);}
+}
+
+/* Standard syntax */
+@keyframes zoomInOut-2 {
+    0%   {transform: scale(1);}
+    50%  {transform: scale(1.05);}
+    100% {transform: scale(1.1);}
+}
+
+.b-close {
+    position: absolute;
+    right: 0;
+    top: 0;
+    cursor: pointer;
+    color: #fff;
+    background: #ff1c7e;
+    padding: 5px 10px;
+}
+
+.shakyImage:hover {
+    animation: shake 0.5s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+@media screen and (max-width: 720px) {
+}
+@media screen and (max-width: 480px) {
+}
+@media screen and (max-width: 420px){
+}
+@media screen and (max-width: 360px){
+}
+@media screen and (max-width: 320px){
+}
+
+.suzy-gradient {
+    color: #fff;
+    background: #834d9b;
+    background: -webkit-linear-gradient(to right, #d04ed6, #834d9b);
+    background: linear-gradient(to right, #d04ed6, #834d9b);
+
+}
+
+.sky-gradient {
+    color: #fff;
+    background: #E0EAFC;
+    background: -webkit-linear-gradient(to right, #CFDEF3, #E0EAFC);
+    background: linear-gradient(to right, #CFDEF3, #E0EAFC);
+}
+
+.blue-gradient {
+    background: linear-gradient(141deg, #9fb8ad 0%, #1fc8db 51%, #2cb5e8 75%);
+    color: white;
+}
+
+.telegram-gradient {
+    background: #1c92d2;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to bottom, #f2fcfe, #1c92d2);  /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to bottom, #f2fcfe, #1c9cdd); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.input-group-prepend, .input-group-append {
+    width: 100%;
+}
+
+.horizontal-divider {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.transbox {
+    margin: 13px;
+    margin-bottom: 40px;
+    width: auto;
+    border-radius: 10px;
+    box-shadow: 0 14px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.transbox p {
+    margin: 5%;
+    font-size: 15px;
+    font-weight: bold;
+    color: #111111;
+}
+
+.box-shadow-1 {
+    -webkit-box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+    -moz-box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+    box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+}
